@@ -1,16 +1,33 @@
 import * as cdk from 'aws-cdk-lib';
+import { SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { CfnSubnetGroup } from 'aws-cdk-lib/aws-elasticache';
 import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { BastionHostResource } from './resources/bastion-host';
+import { VpcResource } from './resources/vpc';
 
 export class BastionExampleStack extends cdk.Stack {
+  public readonly vpc: Vpc;
+  public readonly bastionHostSecurityGroup: SecurityGroup;
+  public readonly redisSecurityGroup: SecurityGroup;
+  public readonly redisSubnetGroup: CfnSubnetGroup;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    /* VPC作成 */
+    this.vpc = new VpcResource(this).vpc;
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'BastionExampleQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    /* 踏み台サーバー作成 */
+    new BastionHostResource(this, {
+      vpc: this.vpc,
+    });
+
+    /* Redis用に先にリソースを作っておく */
+    /*
+    // セキュリティグループ
+    this.redisSecurityGroup = makeSecrityGroup(this, 'redis-security-group', this.vpc);
+    // サブネットグループ
+    this.redisSubnetGroup = makeSubnetGroup(this, 'redis-subnet-group', this.vpc);
+    */
   }
 }
